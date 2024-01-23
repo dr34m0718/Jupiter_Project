@@ -1,8 +1,8 @@
 #importing required libraries
-import sqlite3
 import pandas as pd
 import numpy as np
-import 
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 #Creating Moons class
@@ -35,6 +35,12 @@ class Moons():
 	def rearrange_data_by_col(self, column):
 		self.data = self.data.sort_values(by = column).reset_index(drop = True)
 
+	#funtion to add a new moon
+	def add_moon(self, new_moon_data):
+		new_data = pd.DataFrame(new_moon_data)
+		self.data = pd.concat([self.data,new_data], ignore_index = True)
+		self.rearrange_data_by_col('moon')
+
 	#function to select moon according to given name
 	def select_moon_by_name(self, moon):
 		moon_data = self.data.loc[self.data['moon'] == moon]
@@ -47,7 +53,7 @@ class Moons():
 	def select_moon_by_idx(self, moon_idx):
 		#check if the index given is out of range
 		if moon_idx < 0 or moon_idx > len(self.data):
-			print(f'The index given is out of range.')
+			raise IndexError(f'The index given is out of range.')
 		else:
 			moon_data = self.data.iloc[moon_idx]
 			return moon_data
@@ -106,14 +112,43 @@ class Moons():
 		elif type == 'max':
 			row_idx = self.data[column].idxmax()
 		else:
-			print("Please specify type = 'max' or 'min'")
-			return 0
+			raise ValueError("Please specify type = 'max' or 'min'")
 		return self.select_moon_by_idx(row_idx)
 
 	#function to plot different graphs
 	def plot(self, x = None, y = None, hue = None, plot = 'scatter'):
+		#following is to plot a scatter plot
 		if plot == 'scatter':
 			if x and y is None:
 				print("Datas to be plotted are not stated.")
+			else:
+				f, ax = plt.subplots(figsize = (8,4))
+				sns.scatterplot(self.data, x = x, y = y, hue = hue, palette = 'pastel')
+		#following is to plot a histogram
+		elif plot == 'histogram':
+			if x is None:
+				print("Data to be plot is not stated.")
+			else:
+				f, ax = plt.subplots(figsize = (8,5))
+				sns.histplot(self.data, x = x, y = y, hue = hue, palette = 'pastel')
+		#following is to plot a boxplot
+		elif plot == 'boxplot':
+			if x is None:
+				print("Data to be plotted is not stated.")
+			else:
+				f, ax = plt.subplots(figsize = (6,4))
+				sns.boxplot(self.data, x = x, y = y, hue = hue, palette = 'pastel')
+		#if plot is not available, raise an error
+		else:
+			raise ValueError(f"The plot requested -- {plot} is not available. (Try 'scatter', 'histogram' or 'boxplot'.)")
 
+	#function to make a simple summary for the grouped analysis
+	def grouped_analysis_summary(self, column = 'group'):
+		grouped = self.data.groupby(column)
+		group_count = grouped.size()
+		print(f"Group count by {column} :\n {group_count}\n")
+		mean = grouped.mean()
+		print(f"Mean by {column} :\n {mean}\n")
+		std = grouped.std()
+		print(f"Standard Deviation by {column} :\n {std})")
 
