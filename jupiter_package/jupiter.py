@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
 
 
 #Creating Moons class
@@ -137,21 +140,21 @@ class Moons():
 			if x and y is None:
 				print("Datas to be plotted are not stated.")
 			else:
-				f, ax = plt.subplots(figsize = (8,4))
+				f, ax = plt.subplots(figsize = (4,4))
 				sns.scatterplot(self.__data, x = x, y = y, hue = hue, palette = 'pastel')
 		#following is to plot a histogram
 		elif plot == 'histogram':
 			if x is None:
 				print("Data to be plot is not stated.")
 			else:
-				f, ax = plt.subplots(figsize = (8,5))
+				f, ax = plt.subplots(figsize = (5,3))
 				sns.histplot(self.__data, x = x, y = y, hue = hue, palette = 'pastel')
 		#following is to plot a boxplot
 		elif plot == 'boxplot':
 			if x is None:
 				print("Data to be plotted is not stated.")
 			else:
-				f, ax = plt.subplots(figsize = (6,4))
+				f, ax = plt.subplots(figsize = (5,3))
 				sns.boxplot(self.__data, x = x, y = y, hue = hue, palette = 'pastel')
 		#if plot is not available, raise an error
 		else:
@@ -167,3 +170,37 @@ class Moons():
 		std = grouped.std()
 		print(f"Standard Deviation by {column} :\n {std})")
 
+	def parameter_calculation(self,T,a):
+		#conversion of units
+		seconds_day = 24*60*60
+		km_m = 1000
+		#add columns for T^2 and a^3
+		self.__data['T2_s'] = (self.__data[T]*seconds_day)**2
+		self.__data['a3_m'] = (self.__data[a]*km_m)**3
+
+	def split_train(self, x, y):
+		#defining the feature and target variable
+		X = self.__data[[x]]
+		Y = self.__data[y]
+		#splitting data into train and test sets
+		x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size = 0.2, random_state = 42)
+		#initialise linear regression model
+		self.model = LinearRegression()
+		self.model.fit(x_train, y_train)
+		#prediction on test set
+		pred = self.model.prediction(x_test)
+		#obtain r2score and mse
+		r2 = r2_score(y_test,pred)
+		mse = mean_squared_error(y_test,pred)
+		print(f"r2_score: {r2}")
+		print(f"mean squared error: {mse}")
+		return r2,mse
+
+	def prediction_evaluation(self):
+		#obtaining our coefficient from model
+		coefficient = self.model.coef_[0]
+		#gravity
+		G = 6.67e-11
+		#predicting M
+		M_pred = (4*(np.pi**2))/(G*coefficient)
+		return M_pred
